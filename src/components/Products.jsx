@@ -1,44 +1,134 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaShoppingCart } from "react-icons/fa";
 import Footer from "./Footer";
 import Navbar from "./Navbar";
 import { MdLocalGroceryStore } from "react-icons/md";
 
-const products = [
-  { id: 1, name: "Safeguard", price: 19.99, type: "Home", stock: 10000 },
-  { id: 2, name: "Wings", price: 29.99, type: "Home", stock: 20 },
-  {
-    id: 3,
-    name: "iPhone 100 plus",
-    price: 39.99,
-    type: "Electronics",
-    stock: 0,
-  },
-  { id: 4, name: "White T-Shirt", price: 49.99, type: "Clothing", stock: 0 },
-  { id: 5, name: "T-Back Panty", price: 59.99, type: "Clothing", stock: 25 },
-  {
-    id: 6,
-    name: "Infinix Hot 2000",
-    price: 69.99,
-    type: "Electronics",
-    stock: 8,
-  },
-];
 const productTypes = ["All", "Electronics", "Clothing", "Home"];
 
 function Products() {
+  const userDetails = JSON.parse(sessionStorage.getItem("user"));
   const [filter, setFilter] = useState("All");
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]); // New state for categories
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null); // State for selected product
+  const [quantity, setQuantity] = useState(1); // State for product quantity
   const navigate = useNavigate();
+
+  // Fetch categories when the component mounts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("http://localhost:1337/api/categories");
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setCategories(data.data || []); // Assuming data is in the 'data' field
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Fetch products based on the selected branch
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const selectedBranch = sessionStorage.getItem("selectedBranch");
+
+      if (!selectedBranch) {
+        setError("No branch selected");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `http://localhost:1337/api/products?filters[branch_name][$eq]=${selectedBranch}`
+        );
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setProducts(data.data || []);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const filteredProducts =
     filter === "All"
       ? products
-      : products.filter((product) => product.type === filter);
+      : products.filter((product) => product.category_name === filter);
 
-  const handleBuyNow = () => {
-    navigate(`/order-details`);
+  const openModal = (product) => {
+    setSelectedProduct(product);
+    setQuantity(1);
   };
+
+  const closeModal = () => {
+    setSelectedProduct(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Prepare the cart data
+    const cartData = {
+      data: {
+        product_name: selectedProduct.product_name,
+        quantity: quantity,
+        price: selectedProduct.product_price,
+        user_name: userDetails.name,
+      }
+    };
+
+    // Convert cartData to a JSON string
+    const jsonString = JSON.stringify(cartData);
+
+    try {
+      const response = await fetch("http://localhost:1337/api/carts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", 
+        },
+        body: jsonString,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert("Product added to cart!");
+        console.log(data);
+        closeModal(); 
+      } else {
+        const errorData = await response.text(); 
+        alert("Failed to add to cart!");
+        console.error(errorData);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred while adding to cart!");
+    }
+  };
+
+  if (loading) {
+    return <p>Loading products...</p>;
+  }
+
+  if (error) {
+    return <p>Error: {error}</p>;
+  }
 
   return (
     <>
@@ -50,18 +140,19 @@ function Products() {
             <h1 className="text-2xl font-bold mb-8 ms-2">Our Products</h1>
           </div>
           <div>
-            <label htmlFor="filter" className="mr-2 font-semibold">
-              Filter by:
+            {/* Category dropdown */}
+            <label htmlFor="category" className="ml-4 mr-2 font-semibold">
+              Category:
             </label>
             <select
-              id="filter"
-              value={filter}
+              id="category"
               onChange={(e) => setFilter(e.target.value)}
               className="border rounded-md p-2"
             >
-              {productTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
+              <option value="All">All</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.category_name}>
+                  {category.category_name}
                 </option>
               ))}
             </select>
@@ -71,31 +162,28 @@ function Products() {
           {filteredProducts.map((product) => (
             <div key={product.id} className="bg-white rounded-lg shadow-md p-6">
               <img
-                src={`https://via.placeholder.com/300x200`}
-                alt={product.name}
+                src={product.image}
+                alt={product.product_name}
                 className="w-full h-48 object-cover mb-4 rounded"
               />
-              <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
-              <p className="text-gray-600 mb-2">${product.price}</p>
+              <h2 className="text-xl font-semibold mb-2">{product.product_name}</h2>
+              <p className="text-gray-600 mb-2">${product.product_price}</p>
               <p
-                className={`mb-4 ${
-                  product.stock > 0 ? "text-green-600" : "text-red-600"
-                }`}
+                className={`mb-4 ${product.stock > 0 ? "text-green-600" : "text-red-600"}`}
               >
-                {product.stock > 0
-                  ? `In Stock: ${product.stock}`
-                  : "Out of Stock"}
+                {product.stock > 0 ? `In Stock: ${product.stock}` : "Out of Stock"}
               </p>
               <div className="flex items-center justify-between">
-                <button className="text-secondary font-bold hover:underline">
+                <button
+                  className="text-secondary font-bold hover:underline"
+                  onClick={() => openModal(product)}
+                >
                   Add to Cart
                 </button>
                 <button
-                  onClick={() => handleBuyNow(product.id)}
+                  onClick={() => navigate(`/order-details/${product.id}`)}
                   className={`btn bg-customOrange text-white ${
-                    product.stock > 0
-                      ? "hover:bg-customOrange"
-                      : "opacity-50 cursor-not-allowed"
+                    product.stock > 0 ? "hover:bg-customOrange" : "opacity-50 cursor-not-allowed"
                   }`}
                   disabled={product.stock === 0}
                 >
@@ -106,6 +194,49 @@ function Products() {
           ))}
         </div>
       </div>
+
+      {/* Modal */}
+      {selectedProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-3/4 max-w-lg">
+            <h2 className="text-xl font-semibold mb-4">
+              {selectedProduct.product_name}
+            </h2>
+            <img
+            src={selectedProduct.image}
+              alt={selectedProduct.product_name}
+              className="w-full h-48 object-cover mb-4 rounded"
+            />
+            <p className="text-gray-600 mb-4">Price: ${selectedProduct.product_price}</p>
+            <div className="mb-4">
+              <label htmlFor="quantity" className="mr-2">
+                Quantity:
+              </label>
+              <input
+                type="number"
+                id="quantity"
+                min="1"
+                max={selectedProduct.stock}
+                value={quantity}
+                onChange={(e) => setQuantity(Number(e.target.value))}
+                className="border rounded p-2 w-20"
+              />
+            </div>
+            <form onSubmit={handleSubmit} className="flex justify-end items-center">
+              <button type="submit" className="btn bg-green-500 text-white mr-2">
+                Add to Cart
+              </button>
+              <button
+                type="button"
+                onClick={closeModal}
+                className="btn bg-red-500 text-white"
+              >
+                Close
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
       <Footer />
     </>
   );

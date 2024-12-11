@@ -7,6 +7,7 @@ import TransactionHistoryModal from "./components/TransactionHistoryModal.jsx";
 import Login from "./components/Login.jsx";
 import Register from "./components/Register.jsx";
 import AdminDashboard from "./components/AdminDashboard.jsx";
+import MultipleItems from "./components/MultipleItems.jsx";
 
 const Routing = () => {
   return (
@@ -17,6 +18,7 @@ const Routing = () => {
           <Route path="/branches" element={<Branches />} />
           <Route path="/products" element={<Products />} />
           <Route path="/order-details" element={<OrderDetails />} />
+          <Route path="/multiple-details" element={<MultipleItems />} />
           <Route path="/history" element={<TransactionHistoryModal />} />
           <Route index element={<Login />} />
           <Route path="/register" element={<Register />} />

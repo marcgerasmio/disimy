@@ -7,6 +7,7 @@ import CartModal from "./CartModal";
 import TransactionHistoryModal from "./TransactionHistoryModal";
 
 const Navbar = () => {
+  const userDetails = JSON.parse(sessionStorage.getItem("user"));
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isTransactionHistoryOpen, setIsTransactionHistoryOpen] =
@@ -15,6 +16,11 @@ const Navbar = () => {
   const toggleProfileDropdown = () => {
     setIsProfileOpen(!isProfileOpen);
   };
+
+  const clear = () => {
+    sessionStorage.clear();
+  };
+
 
   return (
     <header className="bg-customGreen text-white font-bold">
@@ -33,11 +39,11 @@ const Navbar = () => {
                 aria-expanded={isProfileOpen ? "true" : "false"}
               >
                 <img
-                  src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                  src={userDetails.image}
                   alt="User avatar"
                   className="w-8 h-8 rounded-full mr-2"
                 />
-                <span className="font-bold">Marion Jotohot</span>
+                <span className="font-bold">{userDetails.name}</span>
               </button>
               {isProfileOpen && (
                 <div className="absolute right-0 w-48 mt-2 py-2 bg-white rounded-md shadow-xl z-20">
@@ -48,7 +54,8 @@ const Navbar = () => {
                     <TbClockDollar className="inline mr-2" /> Purchase History
                   </button>
                   <Link
-                    to="/logout"
+                    to="/"
+                    onClick={clear}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     <FaSignOutAlt className="inline mr-2" /> Logout

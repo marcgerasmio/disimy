@@ -1,14 +1,34 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { IoCloseCircleSharp } from "react-icons/io5";
 
 const CartModal = ({ isOpen, onClose }) => {
+  const userDetails = JSON.parse(sessionStorage.getItem("user"));
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-  const [cartItems, setCartItems] = useState([
-    { id: 1, name: "Item 1", price: 15.49, quantity: 2 },
-    { id: 2, name: "Item 2", price: 9.99, quantity: 1 },
-  ]);
+  const [cartItems, setCartItems] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCartItems();
+    }
+  }, [isOpen]);
+
+  const fetchCartItems = async () => {
+    try {
+      const response = await fetch(`http://localhost:1337/api/carts?filters[user_name][$eq]=${userDetails.name}&_limit=1000`);
+      if (response.ok) {
+        const data = await response.json();
+        setCartItems(data.data); 
+        console.log(data.data);
+      } else {
+        console.error("Failed to fetch cart items");
+      }
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+    }
+  };
 
   const handleSelectItem = (id) => {
     setSelectedItems((prevSelectedItems) =>
@@ -37,9 +57,17 @@ const CartModal = ({ isOpen, onClose }) => {
   };
 
   const handleCheckout = () => {
-    // console.log("Proceed to checkout with selected items:", selectedItems);
-    onClose();
+    const selectedCartItems = cartItems.filter((item) =>
+      selectedItems.includes(item.id)
+    );
+    sessionStorage.setItem("selectedItems", JSON.stringify(selectedCartItems));
+    navigate("/multiple-details"); // Perform the redirection
   };
+
+  const total = cartItems.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  );
 
   if (!isOpen) return null;
 
@@ -84,14 +112,9 @@ const CartModal = ({ isOpen, onClose }) => {
                       onChange={() => handleSelectItem(item.id)}
                       className="mr-4"
                     />
-                    <img
-                      src="https://via.placeholder.com/50"
-                      alt={item.name}
-                      className="w-12 h-12 object-cover rounded border border-gray-300"
-                    />
                     <div className="ml-4 flex-1">
                       <h3 className="text-sm font-medium text-gray-800">
-                        {item.name}
+                        {item.product_name}
                       </h3>
                       <p className="text-sm text-gray-500">
                         ${item.price} x {item.quantity}
@@ -111,17 +134,15 @@ const CartModal = ({ isOpen, onClose }) => {
               </ul>
               <div className="mt-4 text-right">
                 <h3 className="text-md font-bold text-green-600">
-                  Total: $1000000
+                  Total: ${total}
                 </h3>
                 <div className="flex justify-end gap-4 mt-2">
-                  <Link to="/order-details">
-                    <button
-                      onClick={handleCheckout}
-                      className="inline-block btn bg-customOrange hover:bg-customOrange text-white "
-                    >
-                      Proceed to Checkout
-                    </button>
-                  </Link>
+                  <button
+                    onClick={handleCheckout}
+                    className="inline-block btn bg-customOrange hover:bg-customOrange text-white"
+                  >
+                    Proceed to Checkout
+                  </button>
                 </div>
               </div>
             </>

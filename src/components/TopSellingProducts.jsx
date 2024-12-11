@@ -50,22 +50,7 @@ function TopSellingProducts() {
 
   return (
     <div className="p-5">
-      <div className="mb-4 flex justify-between">
-        <h2 className="text-2xl font-bold mb-4">Top Selling Products</h2>
-        <select
-          id="branch"
-          className="rounded-md border-gray-300 shadow-md"
-          value={branchFilter}
-          onChange={(e) => setBranchFilter(e.target.value)}
-        >
-          <option value="">All Branches</option>
-          {uniqueBranches.map((branch) => (
-            <option key={branch} value={branch}>
-              {branch}
-            </option>
-          ))}
-        </select>
-      </div>
+  
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filteredData.map((product) => (

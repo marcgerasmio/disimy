@@ -1,24 +1,61 @@
-import Footer from "./Footer";
-import InventoryOverview from "../components/InventoryOverview";
-import TopSellingProducts from "../components/TopSellingProducts";
-import PurchaseHistory from "../components/PurchaseHistory";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaUser } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 function AdminDashboard() {
+  const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [transactions, setTransactions] = useState([]);
+  const [topSales, setTopSales] = useState([]);
+
+  // Fetch data from the API
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const response = await fetch("http://localhost:1337/api/transactions");
+        if (!response.ok) {
+          throw new Error("Failed to fetch transactions");
+        }
+        const data = await response.json();
+        const result = data.data;
+
+        // Calculate top 20 sales
+        const aggregatedData = result.reduce((acc, transaction) => {
+          const { product_name, quantity } = transaction;
+          if (!acc[product_name]) {
+            acc[product_name] = { product_name, quantity: 0 };
+          }
+          acc[product_name].quantity += quantity;
+          return acc;
+        }, {});
+
+        const topSalesData = Object.values(aggregatedData)
+          .sort((a, b) => b.quantity - a.quantity) // Sort by quantity descending
+          .slice(0, 20); // Get top 20
+
+        setTransactions(data.data);
+        setTopSales(topSalesData);
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
+  const logout = () =>{
+    sessionStorage.clear();
+    navigate("/");
+  }
 
   return (
-    <>
-      <div className="min-h-screen bg-gray-100 mb-10">
-        <nav className="bg-customGreen text-white">
+    <div className="min-h-screen bg-gray-100 mb-10">
+          <nav className="bg-customGreen text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16 items-center">
               <div className="flex items-center">
                 <img src="icon.png" alt="7/11 Logo" className="w-8 h-8 mr-3" />
-                <span className="text-xl font-bold">
-                  Seven Eleven but Nerfed
-                </span>
+                <span className="text-xl font-bold">Seven Eleven but Nerfed</span>
               </div>
               <div className="relative">
                 <button
@@ -33,7 +70,7 @@ function AdminDashboard() {
                     <div className="py-1">
                       <button
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                        onClick={() => console.log("Logout clicked")}
+                       onClick={logout}
                       >
                         Logout
                       </button>
@@ -44,22 +81,70 @@ function AdminDashboard() {
             </div>
           </div>
         </nav>
-        <div>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mt-3">
-              <TopSellingProducts />
-            </div>
-            <div className="mt-8">
-              <InventoryOverview />
-            </div>
-            <div className="mt-8">
-              <PurchaseHistory />
-            </div>
-          </div>
-        </div>
-      </div>
-      <Footer />
-    </>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div className="flex space-x-4 mt-8">
+    {/* Transactions Table */}
+    <div className="px-6 w-1/2">
+      <h2 className="text-2xl font-bold mb-4">Transactions</h2>
+      <table className="min-w-full bg-white shadow-md rounded mb-4">
+        <thead>
+          <tr>
+            <th className="py-2 px-4 border-b text-left">Order ID</th>
+            <th className="py-2 px-4 border-b text-left">Customer Name</th>
+            <th className="py-2 px-4 border-b text-left">Product Name</th>
+            <th className="py-2 px-4 border-b text-left">Quantity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {transactions.length > 0 ? (
+            transactions.map((transaction) => (
+              <tr key={transaction.id}>
+                <td className="py-2 px-4 border-b">{transaction.id}</td>
+                <td className="py-2 px-4 border-b">{transaction.customer_name}</td>
+                <td className="py-2 px-4 border-b">{transaction.product_name}</td>
+                <td className="py-2 px-4 border-b">{transaction.quantity}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="4" className="text-center py-4">No transactions available</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    {/* Top Sales Table */}
+    <div className="px-6 w-1/2">
+      <h2 className="text-2xl font-bold mb-4">Top Sales</h2>
+      <table className="min-w-full bg-white shadow-md rounded mb-4">
+        <thead>
+          <tr>
+            <th className="py-2 px-4 border-b text-left">Product Name</th>
+            <th className="py-2 px-4 border-b text-left">Total Quantity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {topSales.length > 0 ? (
+            topSales.map((sale, index) => (
+              <tr key={index}>
+                <td className="py-2 px-4 border-b">{sale.product_name}</td>
+                <td className="py-2 px-4 border-b">{sale.quantity}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="2" className="text-center py-4">No sales data available</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+    </div>
   );
 }
 
