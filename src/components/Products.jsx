@@ -91,6 +91,7 @@ function Products() {
         quantity: quantity,
         price: selectedProduct.product_price,
         user_name: userDetails.name,
+        branch_name: selectedProduct.branch_name,
       }
     };
 
@@ -134,6 +135,7 @@ function Products() {
         total: product.product_price * quantity,
         customer_name: userDetails.name,
         date: formattedDate,
+        branch_name: product.branch_name,
       }
     };
 

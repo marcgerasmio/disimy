@@ -74,6 +74,7 @@ function MultipleItems() {
           total: item.price * item.quantity,
           customer_name: item?.user_name || "Guest",
           date: formattedDate,
+          branch_name: item.branch_name,
         },
       };
   
