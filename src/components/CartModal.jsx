@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import { IoCloseCircleSharp } from "react-icons/io5";
 
 const CartModal = ({ isOpen, onClose }) => {
@@ -61,7 +61,7 @@ const CartModal = ({ isOpen, onClose }) => {
       selectedItems.includes(item.id)
     );
     sessionStorage.setItem("selectedItems", JSON.stringify(selectedCartItems));
-    navigate("/multiple-details"); // Perform the redirection
+    navigate("/multiple-details");
   };
 
   const total = cartItems.reduce(

@@ -9,7 +9,7 @@ function Branches() {
   const [loading, setLoading] = useState(true); 
   const [error, setError] = useState(null); 
 
-  // Fetch branches from Strapi API
+
   useEffect(() => {
     const fetchBranches = async () => {
       try {

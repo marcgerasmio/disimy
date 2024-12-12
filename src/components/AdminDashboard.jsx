@@ -8,7 +8,7 @@ function AdminDashboard() {
   const [transactions, setTransactions] = useState([]);
   const [topSales, setTopSales] = useState([]);
 
-  // Fetch data from the API
+
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
@@ -19,7 +19,7 @@ function AdminDashboard() {
         const data = await response.json();
         const result = data.data;
 
-        // Calculate top 20 sales
+
         const aggregatedData = result.reduce((acc, transaction) => {
           const { product_name, quantity } = transaction;
           if (!acc[product_name]) {
@@ -30,8 +30,8 @@ function AdminDashboard() {
         }, {});
 
         const topSalesData = Object.values(aggregatedData)
-          .sort((a, b) => b.quantity - a.quantity) // Sort by quantity descending
-          .slice(0, 20); // Get top 20
+          .sort((a, b) => b.quantity - a.quantity) 
+          .slice(0, 20); 
 
         setTransactions(data.data);
         setTopSales(topSalesData);

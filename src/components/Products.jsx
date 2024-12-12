@@ -11,14 +11,14 @@ function Products() {
   const userDetails = JSON.parse(sessionStorage.getItem("user"));
   const [filter, setFilter] = useState("All");
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]); // New state for categories
+  const [categories, setCategories] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedProduct, setSelectedProduct] = useState(null); // State for selected product
-  const [quantity, setQuantity] = useState(1); // State for product quantity
+  const [selectedProduct, setSelectedProduct] = useState(null); 
+  const [quantity, setQuantity] = useState(1); 
   const navigate = useNavigate();
 
-  // Fetch categories when the component mounts
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -27,7 +27,7 @@ function Products() {
           throw new Error(`Error: ${response.statusText}`);
         }
         const data = await response.json();
-        setCategories(data.data || []); // Assuming data is in the 'data' field
+        setCategories(data.data || []);
       } catch (err) {
         setError(err.message);
         setLoading(false);
@@ -37,7 +37,7 @@ function Products() {
     fetchCategories();
   }, []);
 
-  // Fetch products based on the selected branch
+
   useEffect(() => {
     const fetchProducts = async () => {
       const selectedBranch = sessionStorage.getItem("selectedBranch");
@@ -84,7 +84,7 @@ function Products() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Prepare the cart data
+
     const cartData = {
       data: {
         product_name: selectedProduct.product_name,
@@ -94,7 +94,7 @@ function Products() {
       }
     };
 
-    // Convert cartData to a JSON string
+
     const jsonString = JSON.stringify(cartData);
 
     try {
@@ -122,6 +122,48 @@ function Products() {
     }
   };
 
+  const handleCheckout = async (product) => {
+    console.log(product)
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+
+    const cartData = {
+      data: {
+        product_name: product.product_name,
+        quantity: quantity,
+        total: product.product_price * quantity,
+        customer_name: userDetails.name,
+        date: formattedDate,
+      }
+    };
+
+
+    const jsonString = JSON.stringify(cartData);
+
+    try {
+      const response = await fetch("http://localhost:1337/api/transactions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", 
+        },
+        body: jsonString,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert("Product bought successfully!");
+      window.location.reload();
+      } else {
+        const errorData = await response.text(); 
+        alert("Failed to buy product!");
+        console.error(errorData);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred while adding to cart!");
+    }
+  };
+
   if (loading) {
     return <p>Loading products...</p>;
   }
@@ -130,6 +172,7 @@ function Products() {
     return <p>Error: {error}</p>;
   }
 
+  
   return (
     <>
       <Navbar />
@@ -181,7 +224,7 @@ function Products() {
                   Add to Cart
                 </button>
                 <button
-                  onClick={() => navigate(`/order-details/${product.id}`)}
+                  onClick={() => handleCheckout(product)}
                   className={`btn bg-customOrange text-white ${
                     product.stock > 0 ? "hover:bg-customOrange" : "opacity-50 cursor-not-allowed"
                   }`}

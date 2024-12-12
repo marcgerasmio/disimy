@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaShoppingCart, FaTrash } from "react-icons/fa";
 
-// Static data (for fallback if sessionStorage is empty)
+
 const initialOrderItems = [
   {
     id: 1,
@@ -58,7 +58,7 @@ function MultipleItems() {
     0
   );
   const shipping = 10.0;
-  const tax = subtotal * 0.08; // 8% tax rate
+  const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
 
   const handleSubmit = async (e) => {

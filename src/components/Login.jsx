@@ -28,14 +28,14 @@ function Login() {
         return;
       }
 
-      // Placeholder for password check
+     
       const user = data.data[0];
       if (user.password !== password) {
         setError("Incorrect password.");
         return;
       }
 
-      // Successful login logic
+
       sessionStorage.setItem("user", JSON.stringify(user));
 
 
