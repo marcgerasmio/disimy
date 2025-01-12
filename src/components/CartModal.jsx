@@ -117,11 +117,11 @@ const CartModal = ({ isOpen, onClose }) => {
                         {item.product_name}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        ${item.price} x {item.quantity}
+                      ₱{item.price} x {item.quantity}
                       </p>
                     </div>
                     <p className="text-sm font-bold text-gray-800">
-                      ${item.price * item.quantity}
+                    ₱{item.price * item.quantity}
                     </p>
                     <button
                       onClick={() => handleRemoveItem(item.id)}
@@ -134,7 +134,7 @@ const CartModal = ({ isOpen, onClose }) => {
               </ul>
               <div className="mt-4 text-right">
                 <h3 className="text-md font-bold text-green-600">
-                  Total: ${total}
+                  Total: ₱{total}
                 </h3>
                 <div className="flex justify-end gap-4 mt-2">
                   <button

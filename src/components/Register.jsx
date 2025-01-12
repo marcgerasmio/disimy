@@ -20,11 +20,7 @@ function Register() {
   
     // Create a FormData object to handle the file upload
     const formData = new FormData();
-    
-    // Add image file if it exists
-    if (image) {
-      formData.append("files.image", image);
-    }
+  
   
     // Prepare the JSON data
     const jsonData = {
@@ -32,7 +28,6 @@ function Register() {
         name: name,
         email: email,
         password: password,
-        image,
       }
     };
   
@@ -70,14 +65,6 @@ function Register() {
           <img src="icon.png" alt="Logo" className="w-24 h-24" />
         </div>
         <form onSubmit={handleSubmit}>
-          <div className="mb-2">
-            <input
-              type="file"
-              id="image"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-customGreen"
-              onChange={(e) => setImage(e.target.files[0])}
-            />
-          </div>
           <div className="mb-2">
             <input
               type="text"

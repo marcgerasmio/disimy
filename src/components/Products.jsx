@@ -124,47 +124,77 @@ function Products() {
   };
 
   const handleCheckout = async (product) => {
-    console.log(product)
+    console.log(product);
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0];
-
-    const cartData = {
-      data: {
-        product_name: product.product_name,
-        quantity: quantity,
-        total: product.product_price * quantity,
-        customer_name: userDetails.name,
-        date: formattedDate,
-        branch_name: product.branch_name,
-      }
-    };
-
-
-    const jsonString = JSON.stringify(cartData);
-
+  
     try {
+      // Step 1: Fetch current stock from the API
+      const stockResponse = await fetch(
+        `http://localhost:1337/api/products/${product.documentId}`
+      );
+      if (!stockResponse.ok) {
+        throw new Error(`Failed to fetch product stock: ${stockResponse.statusText}`);
+      }
+      const stockData = await stockResponse.json();
+      const currentStock = stockData.data.stock;
+  
+      // Step 2: Check if sufficient stock is available
+      if (currentStock < quantity) {
+        alert("Insufficient stock for this product.");
+        return;
+      }
+  
+      // Step 3: Create transaction (checkout)
+      const cartData = {
+        data: {
+          product_name: product.product_name,
+          quantity: quantity,
+          total: product.product_price * quantity,
+          customer_name: userDetails.name,
+          date: formattedDate,
+          branch_name: product.branch_name,
+        },
+      };
+  
       const response = await fetch("http://localhost:1337/api/transactions", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json", 
+          "Content-Type": "application/json",
         },
-        body: jsonString,
+        body: JSON.stringify(cartData),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        alert("Product bought successfully!");
-      window.location.reload();
-      } else {
-        const errorData = await response.text(); 
-        alert("Failed to buy product!");
-        console.error(errorData);
+  
+      if (!response.ok) {
+        throw new Error(`Transaction failed: ${response.statusText}`);
       }
+  
+      // Step 4: Update stock in the backend
+      const newStock = currentStock - quantity;
+      const updateResponse = await fetch(
+        `http://localhost:1337/api/products/${product.documentId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ data: { stock: newStock } }),
+        }
+      );
+  
+      if (!updateResponse.ok) {
+        throw new Error(`Failed to update product stock: ${updateResponse.statusText}`);
+      }
+  
+      // Step 5: Notify user and refresh
+      alert("Product bought successfully!");
+      window.location.reload();
     } catch (error) {
       console.error("Error:", error);
-      alert("An error occurred while adding to cart!");
+      alert("An error occurred during the checkout process.");
     }
   };
+  
 
   if (loading) {
     return <p>Loading products...</p>;
@@ -204,40 +234,36 @@ function Products() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((product) => (
-            <div key={product.id} className="bg-white rounded-lg shadow-md p-6">
-              <img
-                src={product.image}
-                alt={product.product_name}
-                className="w-full h-48 object-cover mb-4 rounded"
-              />
-              <h2 className="text-xl font-semibold mb-2">{product.product_name}</h2>
-              <p className="text-gray-600 mb-2">${product.product_price}</p>
-              <p
-                className={`mb-4 ${product.stock > 0 ? "text-green-600" : "text-red-600"}`}
-              >
-                {product.stock > 0 ? `In Stock: ${product.stock}` : "Out of Stock"}
-              </p>
-              <div className="flex items-center justify-between">
-                <button
-                  className="text-secondary font-bold hover:underline"
-                  onClick={() => openModal(product)}
-                >
-                  Add to Cart
-                </button>
-                <button
-                  onClick={() => handleCheckout(product)}
-                  className={`btn bg-customOrange text-white ${
-                    product.stock > 0 ? "hover:bg-customOrange" : "opacity-50 cursor-not-allowed"
-                  }`}
-                  disabled={product.stock === 0}
-                >
-                  Check Out <FaShoppingCart className="ml-2" />
-                </button>
+          {filteredProducts
+            .filter((product) => product.stock > 0)
+            .map((product) => (
+              <div key={product.id} className="bg-white rounded-lg shadow-md p-6">
+                <img
+                  src={product.image}
+                  alt={product.product_name}
+                  className="w-full h-48 object-contain mb-4 rounded"
+                />
+                <h2 className="text-xl font-semibold mb-2">{product.product_name}</h2>
+                <p className="text-gray-600 mb-2">₱{product.product_price}</p>
+                <p className="text-gray-600 mb-2">Stocks: {product.stock}</p>
+                <div className="flex items-center justify-between">
+                  <button
+                    className="text-secondary font-bold hover:underline"
+                    onClick={() => openModal(product)}
+                  >
+                    Add to Cart
+                  </button>
+                  <button
+                    onClick={() => handleCheckout(product)}
+                    className="btn bg-customOrange text-white"
+                  >
+                    Check Out <FaShoppingCart className="ml-2" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
+
       </div>
 
       {/* Modal */}
@@ -252,7 +278,7 @@ function Products() {
               alt={selectedProduct.product_name}
               className="w-full h-48 object-cover mb-4 rounded"
             />
-            <p className="text-gray-600 mb-4">Price: ${selectedProduct.product_price}</p>
+            <p className="text-gray-600 mb-4">Price: ₱{selectedProduct.product_price}</p>
             <div className="mb-4">
               <label htmlFor="quantity" className="mr-2">
                 Quantity:

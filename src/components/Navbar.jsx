@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaSignOutAlt } from "react-icons/fa";
@@ -28,7 +27,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center space-x-2">
             <img src="icon.png" alt="7/11 Logo" className="w-8 h-8" />
-            <span className="text-xl font-bold">Seven Eleven but Nerfed</span>
+            <span className="text-xl font-bold">Seven Eleven </span>
           </Link>
           <div className="flex items-center space-x-6">
             <div className="relative">
